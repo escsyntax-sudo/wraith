@@ -234,7 +234,8 @@ h1 {
 .spacer { flex: 1 1 auto; }
 .grow { flex: 1 1 220px; }
 
-.field { display: grid; gap: 5px; }
+.field { display: grid; gap: 5px; cursor: pointer; }
+.field input { cursor: text; }
 .field > span {
   font-family: var(--mono);
   font-size: 10px;
