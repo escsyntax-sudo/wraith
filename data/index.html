@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Wraith ESP32 wireless assessment control panel.">
+<title>Wraith control</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+  <aside class="rail">
+    <div class="brand">
+      <div class="wordmark">WRAITH</div>
+      <div class="brandmeta"><span id="ver">v1.0.0</span><span class="slash">/</span><span>esp32</span></div>
+      <div class="trace" aria-hidden="true"></div>
+    </div>
+    <nav class="sections" aria-label="Sections">
+      <button type="button" class="nav" data-view="scan" aria-current="page"><span class="idx">01</span>Scan</button>
+      <button type="button" class="nav" data-view="strike"><span class="idx">02</span>Strike</button>
+      <button type="button" class="nav" data-view="capture"><span class="idx">03</span>Capture</button>
+      <button type="button" class="nav" data-view="portal"><span class="idx">04</span>Portal</button>
+      <button type="button" class="nav" data-view="console"><span class="idx">05</span>Console</button>
+    </nav>
+    <footer class="railfoot">
+      <div class="linkline"><span class="dot" id="linkdot" aria-hidden="true"></span><span id="linklabel">panel</span></div>
+      <div class="minihost">192.168.4.1:8080</div>
+    </footer>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <h1 id="page-title" tabindex="-1">Scan</h1>
+      <div class="readouts" aria-label="Device state">
+        <span class="chip" id="modechip"><span class="chipdot" aria-hidden="true"></span><span id="modetext">idle</span></span>
+        <span class="ro"><b id="ro-channel">1</b><span>ch</span></span>
+        <span class="ro"><b id="ro-uptime">0:00</b><span>up</span></span>
+        <span class="ro"><b id="ro-heap">0</b><span>kb</span></span>
+        <span class="ro"><b id="ro-storage">-</b><span>disk</span></span>
+      </div>
+      <button type="button" class="btn btn-halt" id="halt">Halt all</button>
+    </header>
+
+    <main id="main" class="content">
+      <!-- 01 SCAN -->
+      <section class="view" id="view-scan">
+        <div class="toolbar">
+          <label class="field" for="scan-channel"><span>Channel</span><input id="scan-channel" type="number" min="1" max="13" value="1" inputmode="numeric"></label>
+          <label class="check"><input id="scan-hop" type="checkbox"><span>Hop channels</span></label>
+          <div class="spacer"></div>
+          <button type="button" class="btn btn-primary" id="scan-start">Start scan</button>
+          <button type="button" class="btn" id="scan-stop">Stop</button>
+        </div>
+
+        <div class="panel">
+          <div class="panelhead">
+            <h2><span class="mark">01</span> Access points</h2>
+            <span class="count" id="ap-count">0</span>
+          </div>
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr><th scope="col">SSID</th><th scope="col">BSSID</th><th scope="col" class="num">RSSI</th><th scope="col" class="num">CH</th><th scope="col">Security</th><th scope="col" class="num">Seen</th><th scope="col"><span class="sr">Action</span></th></tr>
+              </thead>
+              <tbody id="ap-body"><tr class="empty"><td colspan="7">No access points yet. Start a scan.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panelhead">
+            <h2><span class="mark">02</span> Clients</h2>
+            <span class="count" id="client-count">0</span>
+          </div>
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr><th scope="col">MAC</th><th scope="col" class="num">RSSI</th><th scope="col" class="num">CH</th><th scope="col">Associated</th><th scope="col" class="num">Frames</th></tr>
+              </thead>
+              <tbody id="client-body"><tr class="empty"><td colspan="5">No clients seen yet.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 02 STRIKE -->
+      <section class="view" id="view-strike" hidden>
+        <div class="panel targetpanel">
+          <div class="panelhead">
+            <h2><span class="mark">01</span> Target</h2>
+            <span class="tag" id="target-state">none</span>
+          </div>
+          <div class="targetgrid">
+            <div><span class="k">SSID</span><span class="v" id="target-ssid">not selected</span></div>
+            <div><span class="k">BSSID</span><span class="v mono" id="target-bssid">-</span></div>
+            <div><span class="k">Channel</span><span class="v mono" id="target-ch">-</span></div>
+          </div>
+          <p class="note">Transmitting moves the radio to the target channel. If the panel drops, reconnect to the control AP.</p>
+        </div>
+
+        <div class="panel">
+          <div class="panelhead"><h2><span class="mark">02</span> Deauthentication</h2><span class="tag" id="deauth-state">idle</span></div>
+          <div class="toolbar">
+            <label class="field" for="deauth-reason"><span>Reason</span>
+              <select id="deauth-reason">
+                <option value="7">7 class 3 frame</option>
+                <option value="1">1 unspecified</option>
+                <option value="3">3 left network</option>
+                <option value="4">4 inactivity</option>
+                <option value="5">5 capacity</option>
+                <option value="8">8 disassoc</option>
+                <option value="15">15 4-way timeout</option>
+              </select>
+            </label>
+            <label class="field" for="deauth-count"><span>Frames</span><input id="deauth-count" type="number" min="0" value="0" inputmode="numeric"></label>
+            <label class="check"><input id="deauth-cont" type="checkbox" checked><span>Continuous</span></label>
+            <div class="spacer"></div>
+            <button type="button" class="btn btn-primary" id="deauth-start">Transmit</button>
+            <button type="button" class="btn" id="deauth-stop">Stop</button>
+          </div>
+          <div class="meter"><span class="k">Frames sent</span><span class="v mono" id="deauth-sent">0</span></div>
+        </div>
+
+        <div class="panel">
+          <div class="panelhead"><h2><span class="mark">03</span> Beacon flood</h2><span class="tag" id="beacon-state">idle</span></div>
+          <div class="toolbar">
+            <label class="field grow" for="beacon-ssid"><span>SSID (blank = generated)</span><input id="beacon-ssid" type="text" maxlength="32" placeholder="generated"></label>
+            <label class="field" for="beacon-channel"><span>Channel</span><input id="beacon-channel" type="number" min="1" max="13" value="1" inputmode="numeric"></label>
+            <label class="field" for="beacon-count"><span>Frames</span><input id="beacon-count" type="number" min="0" value="0" inputmode="numeric"></label>
+            <div class="spacer"></div>
+            <button type="button" class="btn btn-primary" id="beacon-start">Flood</button>
+            <button type="button" class="btn" id="beacon-stop">Stop</button>
+          </div>
+          <div class="meter"><span class="k">Beacons sent</span><span class="v mono" id="beacon-sent">0</span></div>
+        </div>
+      </section>
+
+      <!-- 03 CAPTURE -->
+      <section class="view" id="view-capture" hidden>
+        <div class="toolbar">
+          <label class="field" for="cap-channel"><span>Channel</span><input id="cap-channel" type="number" min="1" max="13" value="1" inputmode="numeric"></label>
+          <label class="check"><input id="cap-hop" type="checkbox"><span>Hop channels</span></label>
+          <div class="spacer"></div>
+          <button type="button" class="btn btn-primary" id="cap-start">Start capture</button>
+          <button type="button" class="btn" id="cap-stop">Stop</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><span class="k">Frames</span><span class="v mono" id="cap-frames">0</span></div>
+          <div class="stat"><span class="k">EAPOL</span><span class="v mono" id="cap-eapol">0</span></div>
+          <div class="stat"><span class="k">PMKID</span><span class="v mono" id="cap-pmkid">0</span></div>
+          <div class="stat"><span class="k">Handshakes</span><span class="v mono" id="cap-hs">0</span></div>
+          <div class="stat"><span class="k">Written</span><span class="v mono" id="cap-bytes">0 B</span></div>
+        </div>
+
+        <div class="panel">
+          <div class="panelhead"><h2><span class="mark">01</span> Handshake pairs</h2><span class="count" id="hs-count">0</span></div>
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr><th scope="col">BSSID</th><th scope="col">Station</th><th scope="col">SSID</th><th scope="col" class="num">CH</th><th scope="col">M1</th><th scope="col">M2</th><th scope="col">M3</th><th scope="col">M4</th><th scope="col">PMKID</th><th scope="col">State</th></tr>
+              </thead>
+              <tbody id="hs-body"><tr class="empty"><td colspan="10">No EAPOL traffic yet.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panelhead"><h2><span class="mark">02</span> Files</h2><span class="count" id="file-count">0</span></div>
+          <ul class="filelist" id="file-list"><li class="empty">No captures on disk.</li></ul>
+        </div>
+      </section>
+
+      <!-- 04 PORTAL -->
+      <section class="view" id="view-portal" hidden>
+        <div class="panel">
+          <div class="panelhead"><h2><span class="mark">01</span> Captive portal</h2><span class="tag" id="portal-state">idle</span></div>
+          <div class="toolbar">
+            <label class="field grow" for="portal-ssid"><span>Broadcast SSID</span><input id="portal-ssid" type="text" maxlength="32" value="Free WiFi"></label>
+            <div class="spacer"></div>
+            <button type="button" class="btn btn-primary" id="portal-start">Start portal</button>
+            <button type="button" class="btn" id="portal-stop">Stop</button>
+          </div>
+          <p class="note">Starting the portal rebroadcasts the control AP under the portal SSID as an open network. Reconnect to that SSID, then reopen this panel on port 8080. The portal answers on port 80.</p>
+        </div>
+
+        <div class="panel">
+          <div class="panelhead">
+            <h2><span class="mark">02</span> Submitted credentials</h2>
+            <span class="count" id="cred-count">0</span>
+          </div>
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th scope="col" class="num">T+</th><th scope="col">Identity</th><th scope="col">Secret</th></tr></thead>
+              <tbody id="cred-body"><tr class="empty"><td colspan="3">Nothing submitted yet.</td></tr></tbody>
+            </table>
+          </div>
+          <div class="panelactions"><a class="btn" href="/api/download?file=/creds.txt" download>Download creds</a></div>
+        </div>
+      </section>
+
+      <!-- 05 CONSOLE -->
+      <section class="view" id="view-console" hidden>
+        <div class="panel">
+          <div class="panelhead">
+            <h2><span class="mark">01</span> Event log</h2>
+            <button type="button" class="btn btn-small" id="log-clear">Clear</button>
+          </div>
+          <pre class="log" id="log" aria-live="polite"></pre>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/app.js"></script>
+</body>
+</html>
